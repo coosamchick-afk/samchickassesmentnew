@@ -1386,8 +1386,7 @@ function populateEmployeeForm() {
       closeConfigModal();
       await syncWithSpreadsheet();
     }
-
-// =========================================================================
+    // =========================================================================
     // 9. INISIALISASI & ISOLASI TAMPILAN KHUSUS KARYAWAN
     // =========================================================================
     window.addEventListener("DOMContentLoaded", async () => {
@@ -1397,18 +1396,16 @@ function populateEmployeeForm() {
 
       await loadDatabase();
 
-      if (isSecretAdminUrl) {
-        // Jika membuka link khusus ?akses=admin, langsung tampilkan Login Back Office
-        switchMode("admin");
-      } else {
-        // TAMPILAN MURNI KARYAWAN: Sembunyikan seluruh tombol menu & akses Admin
-        document.getElementById("btnModeAdmin").classList.add("hidden");
-        document.getElementById("btnModeEmployee").classList.add("hidden");
-        document.getElementById("syncBadge").classList.add("hidden");
-
+      // Jika membuka dari link soal (?exam=...) ATAU bukan link ?akses=admin
+      if (examIdParam || !isSecretAdminUrl) {
         switchMode("employee");
 
-        // Jika masuk dari link bagikan soal (?exam=...), kunci pilihan paket soalnya
+        // Sembunyikan seluruh deret tombol kanan atas (Portal, Back Office, Refresh) & badge status
+        const navButtonGroup = document.getElementById("btnModeAdmin").parentElement;
+        if (navButtonGroup) navButtonGroup.style.display = "none";
+        document.getElementById("syncBadge").style.display = "none";
+
+        // Kunci dropdown paket ujian sesuai link yang dibagikan
         if (examIdParam) {
           const paketSelect = document.getElementById("empPaketSelect");
           paketSelect.value = examIdParam;
@@ -1416,8 +1413,12 @@ function populateEmployeeForm() {
           paketSelect.classList.add("bg-slate-100", "cursor-not-allowed");
           updateExamInfoPreview();
         }
+      } else {
+        // Jika membuka link khusus Admin (?akses=admin)
+        switchMode("admin");
       }
     });
+
   </script>
 </body>
 </html>
