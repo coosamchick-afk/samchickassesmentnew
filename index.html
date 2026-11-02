@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAMCHICK Assessment Portal & Back-Office</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .fade-in { animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white font-extrabold text-lg shadow-sm shadow-red-200">
+          SC
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-slate-900 text-base sm:text-lg tracking-tight">SAMCHICK ASSESSMENT</h1>
+            <span id="syncBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Mode Lokal / Demo</span>
+          </div>
+          <p class="text-xs text-slate-500">Sistem Evaluasi & Standarisasi Tim Outlet</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="switchMode('employee')" id="btnModeEmployee" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition">
+          Portal Ujian Karyawan
+        </button>
+        <button onclick="switchMode('admin')" id="btnModeAdmin" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition">
+          Back Office Admin
+        </button>
+        <button onclick="syncWithSpreadsheet()" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold flex items-center gap-1.5" title="Sinkronkan Database Spreadsheet">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span class="hidden sm:inline">Refresh Data</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+
+    <!-- ========================================== -->
+    <!-- 1. PORTAL UJIAN KARYAWAN                   -->
+    <!-- ========================================== -->
+    <section id="viewEmployee" class="fade-in">
+      <!-- STEP 1: FORM BIODATA & PILIH PAKET SOAL -->
+      <div id="empStepBiodata" class="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-red-600 to-amber-500 p-6 text-white">
+          <span class="text-xs uppercase tracking-wider font-bold bg-white/20 px-2.5 py-1 rounded-full">Tahap 1 dari 2</span>
+          <h2 class="text-xl font-extrabold mt-2">Biodata Peserta Ujian SAMCHICK</h2>
+          <p class="text-xs text-red-50 mt-1">Data asal store dan jabatan terhubung langsung dengan Master Data Spreadsheet.</p>
+        </div>
+
+        <form onsubmit="startEmployeeExam(event)" class="p-6 space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Paket Ujian Aktif</label>
+            <select id="empPaketSelect" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50"></select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Nama Lengkap Karyawan</label>
+            <input type="text" id="empNama" required placeholder="Contoh: Budi Santoso" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Asal Store</label>
+              <select id="empStore" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Jabatan</label>
+              <select id="empJabatan" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-white"></select>
+            </div>
+          </div>
+
+          <div id="empExamInfoBox" class="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1"></div>
+
+          <button type="submit" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm shadow-md shadow-red-100 transition">
+            Mulai Kerjakan Soal Sekarang
+          </button>
+        </form>
+      </div>
+
+      <!-- STEP 2: PENGERJAAN SOAL & TIMER -->
+      <div id="empStepQuiz" class="hidden max-w-3xl mx-auto space-y-4">
+        <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-4 sticky top-16 z-30">
+          <div>
+            <h3 id="quizActiveTitle" class="font-extrabold text-slate-900 text-base sm:text-lg"></h3>
+            <p id="quizParticipantMeta" class="text-xs text-slate-500"></p>
+          </div>
+          <div id="quizTimerBox" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 font-extrabold text-sm">
+            <span>⏱️ Sisa Waktu:</span>
+            <span id="quizTimerDisplay" class="font-mono text-base">00:00</span>
+          </div>
+        </div>
+
+        <div id="quizQuestionsContainer" class="space-y-4"></div>
+
+        <div class="bg-white rounded-2xl p-4 border border-slate-200 flex items-center justify-between">
+          <span class="text-xs text-slate-500">Pastikan seluruh soal telah dijawab sebelum mengirim.</span>
+          <button onclick="submitEmployeeExam()" id="btnSubmitExam" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-sm transition">
+            Kirim Jawaban Selesai
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: HASIL / STATUS SKOR -->
+      <div id="empStepResult" class="hidden max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center space-y-4">
+        <div id="resultIconBox" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl"></div>
+        <h2 id="resultHeading" class="text-xl font-extrabold text-slate-900"></h2>
+        <p id="resultSubtext" class="text-xs sm:text-sm text-slate-600"></p>
+
+        <div id="resultScoreCard" class="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+          <div class="text-xs uppercase font-bold text-slate-400">Skor Akhir Anda</div>
+          <div id="resultFinalScore" class="text-4xl font-extrabold text-slate-900"></div>
+          <div id="resultPassBadge" class="inline-block text-xs font-bold px-3 py-1 rounded-full"></div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-3 pt-2">
+          <button onclick="checkLatestSubmissionStatus()" id="btnRefreshScoreStatus" class="hidden px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition">
+            Cek Status Rilis Skor dari Admin
+          </button>
+          <button onclick="resetEmployeePortal()" class="px-4 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs transition">
+            Kembali ke Halaman Utama
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 2. LOGIN GATE ADMIN BACK OFFICE            -->
+    <!-- ========================================== -->
+    <section id="viewAdminLogin" class="hidden fade-in max-w-md mx-auto mt-8">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+        <div class="text-center space-y-1">
+          <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white mx-auto flex items-center justify-center font-extrabold text-lg">
+            🔒
+          </div>
+          <h2 class="text-lg font-extrabold text-slate-900 pt-2">Login Back Office SAMCHICK</h2>
+          <p class="text-xs text-slate-500">Masuk untuk mengelola soal, timer, review essay, dan ranking karyawan.</p>
+        </div>
+
+        <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Username</label>
+            <input type="text" id="loginUser" required placeholder="Masukkan username" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Password</label>
+            <input type="password" id="loginPass" required placeholder="Masukkan password" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-slate-900 focus:outline-none" />
+          </div>
+          <div id="loginErrorMsg" class="hidden text-xs text-red-600 font-semibold bg-red-50 p-2.5 rounded-lg border border-red-200">
+            Username atau password tidak sesuai!
+          </div>
+
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm transition">
+            Masuk ke Dashboard
+          </button>
+        </form>
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+          <span>Demo: <b>admin</b> / <b>samchick123</b></span>
+          <button onclick="fillDemoLogin()" class="text-red-600 font-bold hover:underline">Isi Otomatis</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 3. DASHBOARD BACK OFFICE LENGKAP           -->
+    <!-- ========================================== -->
+    <section id="viewAdminDashboard" class="hidden fade-in space-y-6">
+      <!-- Sub-Navigasi Admin -->
+      <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button onclick="switchAdminTab('ranking')" id="tabBtnRanking" class="px-3.5 py-2 rounded-xl text-xs font-bold transition">
+            📊 Ranking & Nilai Terendah
+          </button>
+          <button onclick="switchAdminTab('review')" id="tabBtnReview" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+            <span>📝 Review & Rilis Skor</span>
+            <span id="badgePendingCount" class="px-1.5 py-0.5 text-[10px] rounded-full bg-amber-500 text-white">0</span>
+          </button>
+          <button onclick="switchAdminTab('soal')" id="tabBtnSoal" class="px-3.5 py-2 rounded-xl text-xs font-bold transition">
+            ⚙️ Setting Soal & Timer
+          </button>
+          <button onclick="switchAdminTab('master')" id="tabBtnMaster" class="px-3.5 py-2 rounded-xl text-xs font-bold transition">
+            🏪 Master Store & Jabatan
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openConfigModal()" class="px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700">
+            🔗 Koneksi Spreadsheet
+          </button>
+          <button onclick="logoutAdmin()" class="px-3 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold">
+            Keluar
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: RANKING & NILAI TERENDAH -->
+      <div id="adminTabRanking" class="space-y-6">
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-xs font-bold text-slate-400 uppercase">Total Peserta</div>
+            <div id="kpiTotalPeserta" class="text-2xl font-extrabold text-slate-900 mt-1">0</div>
+            <div class="text-[11px] text-slate-500 mt-1">Seluruh cabang SAMCHICK</div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-xs font-bold text-slate-400 uppercase">Rata-Rata Skor</div>
+            <div id="kpiAvgScore" class="text-2xl font-extrabold text-emerald-600 mt-1">0</div>
+            <div class="text-[11px] text-slate-500 mt-1">Dari skor yang telah dirilis</div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-xs font-bold text-slate-400 uppercase">Nilai Terendah</div>
+            <div id="kpiLowestScore" class="text-2xl font-extrabold text-red-600 mt-1">0</div>
+            <div id="kpiLowestName" class="text-[11px] text-red-500 font-semibold mt-1 truncate">-</div>
+          </div>
+          <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+            <div class="text-xs font-bold text-slate-400 uppercase">Menunggu Review</div>
+            <div id="kpiPendingReview" class="text-2xl font-extrabold text-amber-600 mt-1">0</div>
+            <div class="text-[11px] text-slate-500 mt-1">Perlu rilis skor dari dashboard</div>
+          </div>
+        </div>
+
+        <!-- Highlight Top Ranking & Nilai Terendah -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-extrabold text-sm text-slate-900">🏆 Peringkat Tertinggi (Top Performers)</h3>
+              <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">Skor Tertinggi</span>
+            </div>
+            <div id="topPerformersList" class="space-y-2.5"></div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-red-200 p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-extrabold text-sm text-red-700">⚠️ Perhatian Khusus: Nilai Terendah / Di Bawah KKM</h3>
+              <span class="text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full">Wajib Coaching</span>
+            </div>
+            <div id="lowestPerformersList" class="space-y-2.5"></div>
+          </div>
+        </div>
+
+        <!-- Tabel Lengkap Nilai Karyawan -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="font-extrabold text-base text-slate-900">Daftar Lengkap Ranking & Nilai Karyawan</h3>
+            <div class="flex flex-wrap items-center gap-2">
+              <select id="filterStore" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold">
+                <option value="ALL">Semua Store</option>
+              </select>
+              <select id="filterJabatan" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold">
+                <option value="ALL">Semua Jabatan</option>
+              </select>
+              <select id="sortOrder" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold">
+                <option value="DESC">Urutkan: Nilai Tertinggi (Ranking 1)</option>
+                <option value="ASC">Urutkan: Nilai Terendah</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 text-slate-400 uppercase text-[11px]">
+                  <th class="py-3 px-3">Rank</th>
+                  <th class="py-3 px-3">Nama Karyawan</th>
+                  <th class="py-3 px-3">Asal Store</th>
+                  <th class="py-3 px-3">Jabatan</th>
+                  <th class="py-3 px-3">Paket Soal</th>
+                  <th class="py-3 px-3">Skor</th>
+                  <th class="py-3 px-3">Status</th>
+                </tr>
+              </thead>
+              <tbody id="rankingTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: REVIEW JAWABAN & RILIS SKOR -->
+      <div id="adminTabReview" class="hidden space-y-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+          <h3 class="font-extrabold text-base text-slate-900">Review Manual & Rilis Skor ke Karyawan</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Periksa jawaban essay/uraian karyawan, sesuaikan poin nilai, lalu klik tombol <b>Rilis Skor Sekarang</b> agar nilai tampil di layar karyawan dan tercatat di Spreadsheet.</p>
+          <div id="reviewSubmissionsContainer" class="mt-4 space-y-4"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: SETTING SOAL, TIMER & BAGIKAN LINK -->
+      <div id="adminTabSoal" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Daftar Paket Soal -->
+        <div class="space-y-4">
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center justify-between">
+            <div>
+              <h3 class="font-extrabold text-sm text-slate-900">Daftar Paket Soal</h3>
+              <p class="text-[11px] text-slate-500">Klik paket untuk edit atau bagikan link</p>
+            </div>
+            <button onclick="createNewPaket()" class="px-3 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold">
+              + Paket Baru
+            </button>
+          </div>
+          <div id="paketListSidebar" class="space-y-3"></div>
+        </div>
+
+        <!-- Editor Paket Soal & Timer -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Editor Paket Soal & Timer</h3>
+              <p class="text-xs text-slate-500">Tersinkronisasi langsung dengan tab <b>PaketSoal</b> di Google Spreadsheet</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openShareLinkModal()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm">
+                🔗 Bagikan Link Soal
+              </button>
+              <button onclick="saveCurrentPaket()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm">
+                💾 Simpan ke Spreadsheet
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Judul Paket Ujian</label>
+              <input type="text" id="editPaketTitle" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Standar Nilai Lulus (KKM)</label>
+              <input type="number" id="editPaketKkm" min="0" max="100" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold" />
+            </div>
+          </div>
+
+          <!-- Pengaturan Timer -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <input type="checkbox" id="editPaketUseTimer" onchange="toggleDurationInput()" class="w-4 h-4 accent-red-600 rounded" />
+              <div>
+                <label for="editPaketUseTimer" class="font-bold text-xs sm:text-sm text-slate-900 cursor-pointer">Gunakan Timer Hitung Mundur</label>
+                <p class="text-[11px] text-slate-500">Jika aktif, jawaban karyawan otomatis terkirim saat waktu habis.</p>
+              </div>
+            </div>
+            <div id="durationInputWrapper" class="flex items-center gap-2">
+              <label class="text-xs font-bold text-slate-600">Durasi (Menit):</label>
+              <input type="number" id="editPaketDuration" min="1" max="180" class="w-20 rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm font-bold text-center" />
+            </div>
+          </div>
+
+          <!-- Daftar Butir Soal -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-500">Daftar Butir Pertanyaan</h4>
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="addQuestionItem('pg')" class="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-bold">+ Pilihan Ganda (Auto)</button>
+                <button onclick="addQuestionItem('tf')" class="px-2.5 py-1.5 rounded-lg bg-slate-700 text-white text-xs font-bold">+ Benar/Salah (Auto)</button>
+                <button onclick="addQuestionItem('essay')" class="px-2.5 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold">+ Essay (Review Manual)</button>
+              </div>
+            </div>
+
+            <div id="questionsEditorList" class="space-y-4"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: PENGATURAN MASTER DATA (STORE & JABATAN) -->
+      <div id="adminTabMaster" class="hidden bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h3 class="font-extrabold text-base text-slate-900">Database Dropdown Store & Jabatan</h3>
+            <p class="text-xs text-slate-500">Daftar ini otomatis muncul sebagai pilihan dropdown pada halaman biodata karyawan.</p>
+          </div>
+          <button onclick="saveMasterDataToSheet()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
+            💾 Simpan Master Data ke Spreadsheet
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Daftar Cabang / Store SAMCHICK (1 baris 1 store)</label>
+            <textarea id="masterStoresInput" rows="8" class="w-full rounded-xl border border-slate-300 p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Daftar Jabatan Karyawan (1 baris 1 jabatan)</label>
+            <textarea id="masterJabatansInput" rows="8" class="w-full rounded-xl border border-slate-300 p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL BAGIKAN LINK UJIAN -->
+  <div id="modalShareLink" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-extrabold text-base text-slate-900">🔗 Bagikan Link Ujian ke Karyawan</h3>
+        <button onclick="closeShareLinkModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+      <p class="text-xs text-slate-600">Salin link khusus di bawah ini dan bagikan ke grup WhatsApp tim SAMCHICK. Karyawan yang membuka link ini akan langsung diarahkan ke pengisian biodata dan soal tanpa melihat menu Admin.</p>
+      
+      <div class="p-3 rounded-xl bg-slate-100 border border-slate-200">
+        <input type="text" id="shareableExamUrl" readonly class="w-full bg-transparent text-xs font-mono text-slate-800 focus:outline-none" />
+      </div>
+
+      <div class="flex flex-wrap justify-end gap-2">
+        <button onclick="copyShareableLink()" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold">
+          📋 Salin Link
+        </button>
+        <button onclick="shareViaWhatsApp()" class="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold">
+          💬 Bagikan ke WhatsApp
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL KONFIGURASI URL APPS SCRIPT -->
+  <div id="modalScriptConfig" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-extrabold text-base text-slate-900">🔗 Koneksi Google Apps Script</h3>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+      </div>
+      <p class="text-xs text-slate-600">Tempelkan URL Web App dari hasil Deploy Google Apps Script Anda (`https://script.google.com/macros/s/.../exec`) agar aplikasi terhubung real-time dengan Google Spreadsheet.</p>
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">URL Web App Google Apps Script</label>
+        <input type="url" id="inputScriptUrl" placeholder="https://script.google.com/macros/s/.../exec" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs font-mono" />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeConfigModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold">Batal</button>
+        <button onclick="saveScriptUrlConfig()" class="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-bold">Simpan & Sinkronkan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. KONFIGURASI URL GOOGLE APPS SCRIPT (BISA DIISI LANGSUNG DI SINI)
+    // =========================================================================
+    const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpUkSdiEQdAKLm6WpcHZIaDq3WHriox3T9jpUdsv42X_3hqlWJknIk2_4c92DkNLQ/exec";
+
+    function getScriptUrl() {
+      const saved = localStorage.getItem("SAMCHICK_SCRIPT_URL");
+      if (saved && saved.startsWith("https://script.google.com")) return saved;
+      if (DEFAULT_SCRIPT_URL.startsWith("https://script.google.com")) return DEFAULT_SCRIPT_URL;
+      return "";
+    }
+
+    // =========================================================================
+    // 2. STATE DATABASE LOKAL & SINKRONISASI SPREADSHEET (BEBAS BLOKIR CORS)
+    // =========================================================================
+    let db = {
+      stores: ["SAMCHICK Pusat - Kediri", "SAMCHICK Cabang Pare", "SAMCHICK Cabang Mojoroto", "SAMCHICK Cabang Nganjuk", "SAMCHICK Cabang Blitar"],
+      jabatans: ["Crew Outlet", "Kasir", "Cook / Kitchen", "Supervisor Store", "Store Manager"],
+      paketSoal: [
+        {
+          id: "PKT-SOP01",
+          title: "Ujian Standar SOP & Layanan SAMCHICK",
+          category: "SOP Operasional",
+          kkm: 75,
+          useTimer: true,
+          duration: 15,
+          createdAt: new Date().toISOString(),
+          questions: [
+            {
+              id: "Q1",
+              type: "pg",
+              text: "Berapa suhu standar minyak goreng saat proses frying ayam SAMCHICK agar matang merata?",
+              points: 50,
+              options: ["120°C", "165°C - 170°C", "210°C", "90°C"],
+              correctAnswer: "1"
+            },
+            {
+              id: "Q2",
+              type: "essay",
+              text: "Jelaskan langkah SOP penanganan pelanggan apabila terdapat komplain pesanan kurang lengkap di kasir!",
+              points: 50,
+              options: [],
+              correctAnswer: "Minta maaf dengan sopan, verifikasi struk, segera lengkapi kekurangan menu, dan berikan kompensasi sesuai arahan SPV."
+            }
+          ]
+        }
+      ],
+      hasilUjian: [
+        {
+          submissionId: "SUB-1001",
+          timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+          paketId: "PKT-SOP01",
+          paketTitle: "Ujian Standar SOP & Layanan SAMCHICK",
+          nama: "Rina Wijaya",
+          store: "SAMCHICK Pusat - Kediri",
+          jabatan: "Kasir",
+          score: 92,
+          status: "Dirilis",
+          answers: { Q1: "1", Q2: "Meminta maaf dengan ramah, mengecek struk belanja, dan langsung menyiapkan menu yang kurang." }
+        },
+        {
+          submissionId: "SUB-1002",
+          timestamp: new Date(Date.now() - 3600000 * 3).toISOString(),
+          paketId: "PKT-SOP01",
+          paketTitle: "Ujian Standar SOP & Layanan SAMCHICK",
+          nama: "Doni Pratama",
+          store: "SAMCHICK Cabang Pare",
+          jabatan: "Cook / Kitchen",
+          score: 55,
+          status: "Dirilis",
+          answers: { Q1: "0", Q2: "Langsung mengganti pesanan pelanggan." }
+        },
+        {
+          submissionId: "SUB-1003",
+          timestamp: new Date(Date.now() - 1800000).toISOString(),
+          paketId: "PKT-SOP01",
+          paketTitle: "Ujian Standar SOP & Layanan SAMCHICK",
+          nama: "Bagus Setiawan",
+          store: "SAMCHICK Cabang Mojoroto",
+          jabatan: "Crew Outlet",
+          score: 50,
+          status: "Menunggu Review",
+          answers: { Q1: "1", Q2: "Minta maaf, cek nota pesanan, lalu segera berikan produk yang tertinggal kepada pelanggan." }
+        }
+      ]
+    };
+
+    let currentMode = "employee";
+    let isAdminAuthenticated = false;
+    let activeAdminTab = "ranking";
+    let selectedPaketIndex = 0;
+    let activeQuizState = null;
+    let timerInterval = null;
+    let lastSubmittedId = null;
+
+    async function loadDatabase() {
+      const url = getScriptUrl();
+      const badge = document.getElementById("syncBadge");
+      if (!url) {
+        badge.textContent = "Mode Demo (Belum Terhubung Sheet)";
+        badge.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800";
+        return;
+      }
+
+      try {
+        badge.textContent = "Menyinkronkan Spreadsheet...";
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.master && data.master.length > 0) {
+          const stores = data.master.map(r => r.Store).filter(Boolean);
+          const jabatans = data.master.map(r => r.Jabatan).filter(Boolean);
+          if (stores.length) db.stores = stores;
+          if (jabatans.length) db.jabatans = jabatans;
+        }
+
+        if (data.paketSoal && data.paketSoal.length > 0) {
+          db.paketSoal = data.paketSoal.map(p => ({
+            id: String(p.id),
+            title: p.title,
+            category: p.category || "Umum",
+            kkm: Number(p.kkm || 75),
+            useTimer: p.useTimer === true || String(p.useTimer).toLowerCase() === "true",
+            duration: Number(p.duration || 15),
+            createdAt: p.createdAt,
+            questions: typeof p.questionsJson === "string" ? JSON.parse(p.questionsJson || "[]") : (p.questions || [])
+          }));
+        }
+
+        if (data.hasilUjian) {
+          db.hasilUjian = data.hasilUjian.map(h => ({
+            submissionId: String(h.submissionId),
+            timestamp: h.timestamp,
+            paketId: String(h.paketId),
+            paketTitle: h.paketTitle,
+            nama: h.nama,
+            store: h.store,
+            jabatan: h.jabatan,
+            score: Number(h.score || 0),
+            status: h.status || "Menunggu Review",
+            answers: typeof h.answersJson === "string" ? JSON.parse(h.answersJson || "{}") : (h.answers || {})
+          }));
+        }
+
+        badge.textContent = "Terhubung Google Spreadsheet";
+        badge.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800";
+      } catch (err) {
+        console.error("Gagal memuat spreadsheet:", err);
+        badge.textContent = "Gagal Sinkron (Mode Offline)";
+        badge.className = "text-[11px] font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700";
+      }
+    }
+
+    async function saveToSpreadsheet(payload) {
+      const url = getScriptUrl();
+      if (!url) return { status: "local_only" };
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        return await res.json();
+      } catch (err) {
+        console.error("Gagal simpan ke spreadsheet:", err);
+        return { status: "error" };
+      }
+    }
+
+    async function syncWithSpreadsheet() {
+      await loadDatabase();
+      populateEmployeeForm();
+      if (isAdminAuthenticated) renderAdminDashboard();
+    }
+
+    // =========================================================================
+    // 3. NAVIGASI MODE & ROUTING LINK UJIAN (?exam=ID_PAKET)
+    // =========================================================================
+    function switchMode(mode) {
+      currentMode = mode;
+      const btnEmp = document.getElementById("btnModeEmployee");
+      const btnAdm = document.getElementById("btnModeAdmin");
+      const vEmp = document.getElementById("viewEmployee");
+      const vLogin = document.getElementById("viewAdminLogin");
+      const vDash = document.getElementById("viewAdminDashboard");
+
+      if (mode === "employee") {
+        btnEmp.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-red-600 text-white shadow-xs";
+        btnAdm.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100";
+        vEmp.classList.remove("hidden");
+        vLogin.classList.add("hidden");
+        vDash.classList.add("hidden");
+        populateEmployeeForm();
+      } else {
+        btnAdm.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold bg-slate-900 text-white shadow-xs";
+        btnEmp.className = "px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold text-slate-600 hover:bg-slate-100";
+        vEmp.classList.add("hidden");
+        if (isAdminAuthenticated) {
+          vLogin.classList.add("hidden");
+          vDash.classList.remove("hidden");
+          renderAdminDashboard();
+        } else {
+          vLogin.classList.remove("hidden");
+          vDash.classList.add("hidden");
+        }
+      }
+    }
+
+    // =========================================================================
+    // 4. ALUR PENGERJAAN UJIAN KARYAWAN
+    // =========================================================================
+    function populateEmployeeForm() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const lockedExamId = urlParams.get("exam");
+
+      const paketSelect = document.getElementById("empPaketSelect");
+      paketSelect.innerHTML = db.paketSoal.map(p => `<option value="${p.id}">${p.title}</option>`).join("");
+
+      if (lockedExamId && db.paketSoal.some(p => p.id === lockedExamId)) {
+        paketSelect.value = lockedExamId;
+      }
+
+      const storeSelect = document.getElementById("empStore");
+      storeSelect.innerHTML = `<option value="">-- Pilih Asal Store --</option>` +
+        db.stores.map(s => `<option value="${s}">${s}</option>`).join("");
+
+      const jabatanSelect = document.getElementById("empJabatan");
+      jabatanSelect.innerHTML = `<option value="">-- Pilih Jabatan --</option>` +
+        db.jabatans.map(j => `<option value="${j}">${j}</option>`).join("");
+
+      updateExamInfoPreview();
+      paketSelect.onchange = updateExamInfoPreview;
+    }
+
+    function updateExamInfoPreview() {
+      const paketId = document.getElementById("empPaketSelect").value;
+      const paket = db.paketSoal.find(p => p.id === paketId) || db.paketSoal[0];
+      const box = document.getElementById("empExamInfoBox");
+      if (!paket) return;
+
+      const hasManual = paket.questions.some(q => q.type === "essay");
+      box.innerHTML = `
+        <div class="font-bold">📌 Detail Paket: ${paket.title}</div>
+        <div>• Jumlah Soal: <b>${paket.questions.length} Soal</b> | Standar Lulus (KKM): <b>${paket.kkm} Poin</b></div>
+        <div>• Format Timer: <b>${paket.useTimer ? `Aktif (${paket.duration} Menit)` : "Tanpa Batas Waktu"}</b></div>
+        <div>• Rilis Nilai: <b>${hasManual ? "Menunggu Review Admin (Ada Soal Essay)" : "Otomatis Langsung Keluar (Auto-Correct)"}</b></div>
+      `;
+    }
+
+    function startEmployeeExam(e) {
+      e.preventDefault();
+      const paketId = document.getElementById("empPaketSelect").value;
+      const paket = db.paketSoal.find(p => p.id === paketId);
+      if (!paket || !paket.questions.length) {
+        alert("Paket soal belum memiliki pertanyaan!");
+        return;
+      }
+
+      const nama = document.getElementById("empNama").value.trim();
+      const store = document.getElementById("empStore").value;
+      const jabatan = document.getElementById("empJabatan").value;
+
+      activeQuizState = {
+        paket,
+        nama,
+        store,
+        jabatan,
+        remainingSeconds: paket.useTimer ? paket.duration * 60 : null
+      };
+
+      document.getElementById("empStepBiodata").classList.add("hidden");
+      document.getElementById("empStepResult").classList.add("hidden");
+      document.getElementById("empStepQuiz").classList.remove("hidden");
+
+      document.getElementById("quizActiveTitle").textContent = paket.title;
+      document.getElementById("quizParticipantMeta").textContent = `${nama} • ${store} (${jabatan})`;
+
+      const qContainer = document.getElementById("quizQuestionsContainer");
+      qContainer.innerHTML = paket.questions.map((q, idx) => {
+        let inputHtml = "";
+        if (q.type === "pg") {
+          inputHtml = `<div class="space-y-2 mt-3">` + q.options.map((opt, oIdx) => `
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer">
+              <input type="radio" name="ans_${q.id}" value="${oIdx}" class="w-4 h-4 accent-red-600" />
+              <span class="text-sm text-slate-700">${opt}</span>
+            </label>
+          `).join("") + `</div>`;
+        } else if (q.type === "tf") {
+          inputHtml = `
+            <div class="grid grid-cols-2 gap-3 mt-3">
+              <label class="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer font-bold text-sm">
+                <input type="radio" name="ans_${q.id}" value="Benar" class="w-4 h-4 accent-red-600" /> Benar
+              </label>
+              <label class="flex items-center justify-center gap-2 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer font-bold text-sm">
+                <input type="radio" name="ans_${q.id}" value="Salah" class="w-4 h-4 accent-red-600" /> Salah
+              </label>
+            </div>`;
+        } else {
+          inputHtml = `
+            <textarea name="ans_${q.id}" rows="4" placeholder="Tuliskan jawaban lengkap Anda di sini..." class="w-full mt-3 rounded-xl border border-slate-300 p-3 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
+          `;
+        }
+
+        return `
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase mb-1">
+              <span>Pertanyaan #${idx + 1} (${q.type === 'essay' ? 'Essay - Review Manual' : 'Auto-Correct'})</span>
+              <span>Bobot: ${q.points} Poin</span>
+            </div>
+            <p class="font-bold text-slate-900 text-sm sm:text-base">${q.text}</p>
+            ${inputHtml}
+          </div>
+        `;
+      }).join("");
+
+      if (timerInterval) clearInterval(timerInterval);
+      const timerBox = document.getElementById("quizTimerBox");
+      if (paket.useTimer) {
+        timerBox.classList.remove("hidden");
+        updateTimerUI();
+        timerInterval = setInterval(() => {
+          activeQuizState.remainingSeconds--;
+          updateTimerUI();
+          if (activeQuizState.remainingSeconds <= 0) {
+            clearInterval(timerInterval);
+            alert("Waktu pengerjaan habis! Jawaban Anda akan dikirim secara otomatis.");
+            submitEmployeeExam();
+          }
+        }, 1000);
+      } else {
+        timerBox.classList.add("hidden");
+      }
+    }
+
+    function updateTimerUI() {
+      const sec = Math.max(0, activeQuizState.remainingSeconds);
+      const m = String(Math.floor(sec / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      document.getElementById("quizTimerDisplay").textContent = `${m}:${s}`;
+    }
+
+    async function submitEmployeeExam() {
+      if (!activeQuizState) return;
+      if (timerInterval) clearInterval(timerInterval);
+
+      const { paket, nama, store, jabatan } = activeQuizState;
+      const answers = {};
+      let autoScore = 0;
+      let requiresManualReview = false;
+
+      paket.questions.forEach(q => {
+        if (q.type === "pg" || q.type === "tf") {
+          const checked = document.querySelector(`input[name="ans_${q.id}"]:checked`);
+          const val = checked ? checked.value : "";
+          answers[q.id] = val;
+          if (String(val) === String(q.correctAnswer)) {
+            autoScore += Number(q.points || 0);
+          }
+        } else {
+          requiresManualReview = true;
+          const area = document.querySelector(`textarea[name="ans_${q.id}"]`);
+          answers[q.id] = area ? area.value.trim() : "";
+        }
+      });
+
+      const submissionId = "SUB-" + Date.now().toString().slice(-6);
+      lastSubmittedId = submissionId;
+      const status = requiresManualReview ? "Menunggu Review" : "Dirilis";
+      const timestamp = new Date().toISOString();
+
+      const newRecord = {
+        submissionId,
+        timestamp,
+        paketId: paket.id,
+        paketTitle: paket.title,
+        nama,
+        store,
+        jabatan,
+        score: autoScore,
+        status,
+        answers
+      };
+
+      db.hasilUjian.unshift(newRecord);
+
+      const btn = document.getElementById("btnSubmitExam");
+      btn.textContent = "Menyimpan ke Spreadsheet...";
+      btn.disabled = true;
+
+      await saveToSpreadsheet({
+        action: "insert",
+        targetSheet: "HasilUjian",
+        rowValues: [
+          submissionId,
+          timestamp,
+          paket.id,
+          paket.title,
+          nama,
+          store,
+          jabatan,
+          autoScore,
+          status,
+          JSON.stringify(answers)
+        ]
+      });
+
+      btn.textContent = "Kirim Jawaban Selesai";
+      btn.disabled = false;
+      showEmployeeResultScreen(newRecord, paket.kkm);
+    }
+
+    function showEmployeeResultScreen(record, kkm) {
+      document.getElementById("empStepQuiz").classList.add("hidden");
+      document.getElementById("empStepResult").classList.remove("hidden");
+
+      const iconBox = document.getElementById("resultIconBox");
+      const heading = document.getElementById("resultHeading");
+      const subtext = document.getElementById("resultSubtext");
+      const scoreEl = document.getElementById("resultFinalScore");
+      const passBadge = document.getElementById("resultPassBadge");
+      const btnRefresh = document.getElementById("btnRefreshScoreStatus");
+
+      if (record.status === "Dirilis") {
+        const passed = record.score >= kkm;
+        iconBox.textContent = passed ? "🎉" : "📝";
+        iconBox.className = `w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl ${passed ? 'bg-emerald-100' : 'bg-red-100'}`;
+        heading.textContent = "Skor Ujian Anda Telah Rilis!";
+        subtext.textContent = `Terima kasih ${record.nama} (${record.store}), hasil pengerjaan Anda telah tercatat di database SAMCHICK.`;
+        scoreEl.textContent = record.score;
+        passBadge.textContent = passed ? `LULUS STANDAR KKM (${kkm})` : `DI BAWAH KKM (${kkm}) - PERLU EVALUASI`;
+        passBadge.className = `inline-block text-xs font-bold px-3 py-1 rounded-full ${passed ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-700'}`;
+        btnRefresh.classList.add("hidden");
+      } else {
+        iconBox.textContent = "⏳";
+        iconBox.className = "w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl bg-amber-100";
+        heading.textContent = "Jawaban Terkirim - Menunggu Review Admin";
+        subtext.textContent = `Paket soal ini memiliki pertanyaan Essay. Skor akhir Anda akan muncul setelah direview dan dirilis oleh Admin di Dashboard Back Office.`;
+        scoreEl.textContent = "Menunggu Rilis";
+        passBadge.textContent = `Skor Sementara Pilihan Ganda: ${record.score} Poin`;
+        passBadge.className = "inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800";
+        btnRefresh.classList.remove("hidden");
+      }
+    }
+
+    async function checkLatestSubmissionStatus() {
+      await loadDatabase();
+      const found = db.hasilUjian.find(h => h.submissionId === lastSubmittedId);
+      if (found) {
+        const paket = db.paketSoal.find(p => p.id === found.paketId);
+        showEmployeeResultScreen(found, paket ? paket.kkm : 75);
+      }
+    }
+
+    function resetEmployeePortal() {
+      document.getElementById("empStepResult").classList.add("hidden");
+      document.getElementById("empStepQuiz").classList.add("hidden");
+      document.getElementById("empStepBiodata").classList.remove("hidden");
+      document.getElementById("empNama").value = "";
+    }
+
+    // =========================================================================
+    // 5. AUTENTIKASI & DASHBOARD BACK OFFICE ADMIN
+    // =========================================================================
+    function fillDemoLogin() {
+      document.getElementById("loginUser").value = "admin";
+      document.getElementById("loginPass").value = "samchick123";
+    }
+
+    function handleAdminLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
+
+      if (u === "admin" && p === "samchick123") {
+        isAdminAuthenticated = true;
+        document.getElementById("loginErrorMsg").classList.add("hidden");
+        switchMode("admin");
+      } else {
+        document.getElementById("loginErrorMsg").classList.remove("hidden");
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminAuthenticated = false;
+      switchMode("admin");
+    }
+
+    function switchAdminTab(tab) {
+      activeAdminTab = tab;
+      const tabs = ["ranking", "review", "soal", "master"];
+      tabs.forEach(t => {
+        const el = document.getElementById("adminTab" + t.charAt(0).toUpperCase() + t.slice(1));
+        const btn = document.getElementById("tabBtn" + t.charAt(0).toUpperCase() + t.slice(1));
+        if (t === tab) {
+          el.classList.remove("hidden");
+          btn.className = "px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white transition flex items-center gap-1.5";
+        } else {
+          el.classList.add("hidden");
+          btn.className = "px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5";
+        }
+      });
+      renderAdminDashboard();
+    }
+
+    function renderAdminDashboard() {
+      // Populate Filter Dropdowns
+      const fStore = document.getElementById("filterStore");
+      const currStore = fStore.value || "ALL";
+      fStore.innerHTML = `<option value="ALL">Semua Store</option>` + db.stores.map(s => `<option value="${s}">${s}</option>`).join("");
+      fStore.value = currStore;
+
+      const fJab = document.getElementById("filterJabatan");
+      const currJab = fJab.value || "ALL";
+      fJab.innerHTML = `<option value="ALL">Semua Jabatan</option>` + db.jabatans.map(j => `<option value="${j}">${j}</option>`).join("");
+      fJab.value = currJab;
+
+      const releasedList = db.hasilUjian.filter(h => h.status === "Dirilis");
+      const pendingList = db.hasilUjian.filter(h => h.status !== "Dirilis");
+
+      document.getElementById("badgePendingCount").textContent = pendingList.length;
+      document.getElementById("kpiTotalPeserta").textContent = db.hasilUjian.length;
+      document.getElementById("kpiPendingReview").textContent = pendingList.length;
+
+      if (releasedList.length > 0) {
+        const avg = Math.round(releasedList.reduce((acc, r) => acc + Number(r.score), 0) / releasedList.length);
+        document.getElementById("kpiAvgScore").textContent = avg;
+
+        const sortedAsc = [...releasedList].sort((a, b) => a.score - b.score);
+        document.getElementById("kpiLowestScore").textContent = sortedAsc[0].score;
+        document.getElementById("kpiLowestName").textContent = `${sortedAsc[0].nama} (${sortedAsc[0].store})`;
+      } else {
+        document.getElementById("kpiAvgScore").textContent = "0";
+        document.getElementById("kpiLowestScore").textContent = "-";
+        document.getElementById("kpiLowestName").textContent = "Belum ada skor rilis";
+      }
+
+      // Render Top Performers & Nilai Terendah
+      const topSorted = [...releasedList].sort((a, b) => b.score - a.score).slice(0, 3);
+      document.getElementById("topPerformersList").innerHTML = topSorted.length ? topSorted.map((item, idx) => `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+          <div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center">${idx + 1}</span>
+            <div>
+              <div class="font-bold text-xs sm:text-sm text-slate-900">${item.nama}</div>
+              <div class="text-[11px] text-slate-500">${item.store} • ${item.jabatan}</div>
+            </div>
+          </div>
+          <span class="font-extrabold text-sm text-emerald-700">${item.score} Poin</span>
+        </div>
+      `).join("") : `<p class="text-xs text-slate-400">Belum ada data nilai dirilis.</p>`;
+
+      const lowSorted = [...releasedList].sort((a, b) => a.score - b.score).slice(0, 3);
+      document.getElementById("lowestPerformersList").innerHTML = lowSorted.length ? lowSorted.map(item => `
+        <div class="flex items-center justify-between p-3 rounded-xl bg-red-50/60 border border-red-200">
+          <div>
+            <div class="font-bold text-xs sm:text-sm text-slate-900">${item.nama}</div>
+            <div class="text-[11px] text-slate-500">${item.store} • ${item.jabatan}</div>
+          </div>
+          <span class="font-extrabold text-sm text-red-600">${item.score} Poin</span>
+        </div>
+      `).join("") : `<p class="text-xs text-slate-400">Belum ada data nilai terendah.</p>`;
+
+      // Render Main Ranking Table
+      let filtered = [...db.hasilUjian];
+      if (currStore !== "ALL") filtered = filtered.filter(h => h.store === currStore);
+      if (currJab !== "ALL") filtered = filtered.filter(h => h.jabatan === currJab);
+
+      const sortOrder = document.getElementById("sortOrder").value;
+      filtered.sort((a, b) => sortOrder === "DESC" ? b.score - a.score : a.score - b.score);
+
+      document.getElementById("rankingTableBody").innerHTML = filtered.map((item, index) => `
+        <tr class="hover:bg-slate-50">
+          <td class="py-3 px-3 font-extrabold text-slate-700">#${index + 1}</td>
+          <td class="py-3 px-3 font-bold text-slate-900">${item.nama}</td>
+          <td class="py-3 px-3 text-slate-600">${item.store}</td>
+          <td class="py-3 px-3 text-slate-600">${item.jabatan}</td>
+          <td class="py-3 px-3 text-slate-600">${item.paketTitle}</td>
+          <td class="py-3 px-3 font-extrabold ${item.score >= 75 ? 'text-emerald-600' : 'text-red-600'}">${item.score}</td>
+          <td class="py-3 px-3">
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${item.status === 'Dirilis' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+              ${item.status}
+            </span>
+          </td>
+        </tr>
+      `).join("");
+
+      renderReviewSection();
+      renderPaketEditorSection();
+      renderMasterDataSection();
+    }
+
+    // =========================================================================
+    // 6. FITUR REVIEW JAWABAN MANUAL & TOMBOL RILIS SKOR
+    // =========================================================================
+    function renderReviewSection() {
+      const container = document.getElementById("reviewSubmissionsContainer");
+      if (!db.hasilUjian.length) {
+        container.innerHTML = `<p class="text-xs text-slate-400">Belum ada jawaban masuk.</p>`;
+        return;
+      }
+
+      container.innerHTML = db.hasilUjian.map(sub => {
+        const paket = db.paketSoal.find(p => p.id === sub.paketId);
+        const questions = paket ? paket.questions : [];
+
+        const detailAnswers = questions.map((q, idx) => {
+          const empAns = sub.answers ? (sub.answers[q.id] ?? "-") : "-";
+          const displayAns = q.type === "pg" && q.options[empAns] !== undefined ? q.options[empAns] : empAns;
+          return `
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+              <div class="font-bold text-slate-700">${idx + 1}. ${q.text} <span class="text-slate-400">(${q.type.toUpperCase()} - Bobot ${q.points})</span></div>
+              <div class="text-slate-900"><b>Jawaban Karyawan:</b> ${displayAns || '<i>Kosong</i>'}</div>
+              <div class="text-emerald-700"><b>Kunci / Panduan:</b> ${q.type === 'pg' ? (q.options[q.correctAnswer] || '') : q.correctAnswer}</div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="p-4 rounded-2xl border ${sub.status === 'Dirilis' ? 'border-slate-200 bg-white' : 'border-amber-300 bg-amber-50/30'} space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <span class="font-extrabold text-sm text-slate-900">${sub.nama}</span>
+                <span class="text-xs text-slate-500"> • ${sub.store} (${sub.jabatan})</span>
+                <div class="text-[11px] text-slate-400">${sub.paketTitle}</div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-xs font-bold ${sub.status === 'Dirilis' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${sub.status}
+              </span>
+            </div>
+
+            <div class="space-y-2">${detailAnswers}</div>
+
+            <div class="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/70">
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-700">Skor Akhir (0-100):</label>
+                <input type="number" id="scoreInput_${sub.submissionId}" value="${sub.score}" min="0" max="100" class="w-24 rounded-xl border border-slate-300 px-3 py-1.5 text-sm font-extrabold text-center bg-white" />
+              </div>
+              <button onclick="releaseEmployeeScore('${sub.submissionId}')" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition">
+                ✅ Simpan & Rilis Skor Sekarang
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function releaseEmployeeScore(submissionId) {
+      const scoreInput = document.getElementById(`scoreInput_${submissionId}`);
+      const finalScore = Number(scoreInput.value || 0);
+      const item = db.hasilUjian.find(h => h.submissionId === submissionId);
+      if (!item) return;
+
+      item.score = finalScore;
+      item.status = "Dirilis";
+
+      await saveToSpreadsheet({
+        action: "ReleaseScore",
+        targetSheet: "HasilUjian",
+        submissionId,
+        finalScore,
+        answersJson: JSON.stringify(item.answers || {})
+      });
+
+      alert(`Skor untuk ${item.nama} (${finalScore} Poin) berhasil dirilis!`);
+      renderAdminDashboard();
+    }
+
+    // =========================================================================
+    // 7. PEMBUAT SOAL, TIMER & GENERATOR LINK
+    // =========================================================================
+    function renderPaketEditorSection() {
+      const sidebar = document.getElementById("paketListSidebar");
+      sidebar.innerHTML = db.paketSoal.map((p, idx) => `
+        <div onclick="selectPaketForEdit(${idx})" class="p-3.5 rounded-2xl border cursor-pointer transition ${idx === selectedPaketIndex ? 'border-red-600 bg-red-50/40' : 'border-slate-200 bg-white hover:bg-slate-50'}">
+          <div class="font-extrabold text-xs sm:text-sm text-slate-900">${p.title}</div>
+          <div class="text-[11px] text-slate-500 mt-1">
+            ${p.questions.length} Soal • KKM ${p.kkm} • ${p.useTimer ? `⏱️ ${p.duration}m` : 'Tanpa Timer'}
+          </div>
+        </div>
+      `).join("");
+
+      const activePaket = db.paketSoal[selectedPaketIndex];
+      if (!activePaket) return;
+
+      document.getElementById("editPaketTitle").value = activePaket.title;
+      document.getElementById("editPaketKkm").value = activePaket.kkm;
+      document.getElementById("editPaketUseTimer").checked = activePaket.useTimer;
+      document.getElementById("editPaketDuration").value = activePaket.duration;
+      toggleDurationInput();
+
+      const qList = document.getElementById("questionsEditorList");
+      qList.innerHTML = activePaket.questions.map((q, qIdx) => {
+        let answerConfigHtml = "";
+        if (q.type === "pg") {
+          answerConfigHtml = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              ${q.options.map((opt, oIdx) => `
+                <div class="flex items-center gap-2">
+                  <input type="radio" name="correct_${q.id}" ${String(q.correctAnswer) === String(oIdx) ? 'checked' : ''} onchange="updateQuestionField(${qIdx}, 'correctAnswer', '${oIdx}')" class="accent-emerald-600" />
+                  <input type="text" value="${opt}" oninput="updateQuestionOption(${qIdx}, ${oIdx}, this.value)" class="flex-1 rounded-lg border border-slate-300 px-2.5 py-1 text-xs" />
+                </div>
+              `).join("")}
+            </div>
+          `;
+        } else if (q.type === "tf") {
+          answerConfigHtml = `
+            <div class="mt-2 flex items-center gap-3 text-xs font-bold">
+              <span>Kunci Jawaban:</span>
+              <label><input type="radio" name="correct_${q.id}" ${q.correctAnswer === 'Benar' ? 'checked' : ''} onchange="updateQuestionField(${qIdx}, 'correctAnswer', 'Benar')" /> Benar</label>
+              <label><input type="radio" name="correct_${q.id}" ${q.correctAnswer === 'Salah' ? 'checked' : ''} onchange="updateQuestionField(${qIdx}, 'correctAnswer', 'Salah')" /> Salah</label>
+            </div>
+          `;
+        } else {
+          answerConfigHtml = `
+            <div class="mt-2">
+              <label class="block text-[11px] font-bold text-slate-500">Panduan Jawaban / Rubrik Admin (Untuk Review Manual):</label>
+              <input type="text" value="${q.correctAnswer || ''}" oninput="updateQuestionField(${qIdx}, 'correctAnswer', this.value)" class="w-full mt-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs" />
+            </div>
+          `;
+        }
+
+        return `
+          <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-extrabold uppercase text-slate-500">#${qIdx + 1} • ${q.type === 'essay' ? 'Essay (Review Manual)' : 'Auto-Correct (' + q.type.toUpperCase() + ')'}</span>
+              <div class="flex items-center gap-2">
+                <label class="text-xs font-bold text-slate-600">Poin:</label>
+                <input type="number" value="${q.points}" oninput="updateQuestionField(${qIdx}, 'points', this.value)" class="w-16 rounded-lg border border-slate-300 px-2 py-1 text-xs font-bold text-center bg-white" />
+                <button onclick="removeQuestionItem(${qIdx})" class="text-red-600 hover:underline text-xs font-bold ml-2">Hapus</button>
+              </div>
+            </div>
+            <input type="text" value="${q.text}" oninput="updateQuestionField(${qIdx}, 'text', this.value)" placeholder="Tulis pertanyaan di sini..." class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm font-semibold bg-white" />
+            ${answerConfigHtml}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function selectPaketForEdit(idx) {
+      selectedPaketIndex = idx;
+      renderPaketEditorSection();
+    }
+
+    function toggleDurationInput() {
+      const checked = document.getElementById("editPaketUseTimer").checked;
+      document.getElementById("durationInputWrapper").style.opacity = checked ? "1" : "0.4";
+    }
+
+    function updateQuestionField(qIdx, field, value) {
+      const p = db.paketSoal[selectedPaketIndex];
+      if (!p || !p.questions[qIdx]) return;
+      p.questions[qIdx][field] = field === "points" ? Number(value) : value;
+    }
+
+    function updateQuestionOption(qIdx, oIdx, value) {
+      const p = db.paketSoal[selectedPaketIndex];
+      if (!p || !p.questions[qIdx]) return;
+      p.questions[qIdx].options[oIdx] = value;
+    }
+
+    function addQuestionItem(type) {
+      const p = db.paketSoal[selectedPaketIndex];
+      if (!p) return;
+      p.questions.push({
+        id: "Q" + Date.now().toString().slice(-4),
+        type,
+        text: "Pertanyaan baru untuk tim SAMCHICK...",
+        points: 20,
+        options: type === "pg" ? ["Pilihan A", "Pilihan B", "Pilihan C", "Pilihan D"] : [],
+        correctAnswer: type === "pg" ? "0" : (type === "tf" ? "Benar" : "Panduan jawaban essay")
+      });
+      renderPaketEditorSection();
+    }
+
+    function removeQuestionItem(qIdx) {
+      const p = db.paketSoal[selectedPaketIndex];
+      if (!p) return;
+      p.questions.splice(qIdx, 1);
+      renderPaketEditorSection();
+    }
+
+    function createNewPaket() {
+      const newPaket = {
+        id: "PKT-" + Date.now().toString().slice(-4),
+        title: "Paket Evaluasi Baru SAMCHICK",
+        category: "Operasional",
+        kkm: 75,
+        useTimer: true,
+        duration: 15,
+        createdAt: new Date().toISOString(),
+        questions: [
+          {
+            id: "Q1",
+            type: "pg",
+            text: "Contoh pertanyaan pilihan ganda baru?",
+            points: 100,
+            options: ["Opsi A", "Opsi B", "Opsi C", "Opsi D"],
+            correctAnswer: "0"
+          }
+        ]
+      };
+      db.paketSoal.push(newPaket);
+      selectedPaketIndex = db.paketSoal.length - 1;
+      renderPaketEditorSection();
+    }
+
+    async function saveCurrentPaket() {
+      const p = db.paketSoal[selectedPaketIndex];
+      if (!p) return;
+      p.title = document.getElementById("editPaketTitle").value.trim() || "Paket Soal SAMCHICK";
+      p.kkm = Number(document.getElementById("editPaketKkm").value || 75);
+      p.useTimer = document.getElementById("editPaketUseTimer").checked;
+      p.duration = Number(document.getElementById("editPaketDuration").value || 15);
+
+      await saveToSpreadsheet({
+        action: "savePaket",
+        paket: p
+      });
+
+      populateEmployeeForm();
+      renderPaketEditorSection();
+      alert("Paket soal & pengaturan timer berhasil disimpan!");
+    }
+
+    function openShareLinkModal() {
+      const p = db.paketSoal[selectedPaketIndex];
+      if (!p) return;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = `${baseUrl}?exam=${encodeURIComponent(p.id)}`;
+      document.getElementById("shareableExamUrl").value = shareUrl;
+      const modal = document.getElementById("modalShareLink");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeShareLinkModal() {
+      const modal = document.getElementById("modalShareLink");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function copyShareableLink() {
+      const input = document.getElementById("shareableExamUrl");
+      navigator.clipboard.writeText(input.value);
+      alert("Link ujian berhasil disalin!");
+    }
+
+    function shareViaWhatsApp() {
+      const p = db.paketSoal[selectedPaketIndex];
+      const url = document.getElementById("shareableExamUrl").value;
+      const text = `Halo Tim *SAMCHICK*! Silakan kerjakan *${p.title}* melalui link berikut:\n\n${url}\n\nSelamat mengerjakan!`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+    }
+
+    // =========================================================================
+    // 8. PENGATURAN MASTER DATA STORE & JABATAN + KONEKSI URL SHEET
+    // =========================================================================
+    function renderMasterDataSection() {
+      document.getElementById("masterStoresInput").value = db.stores.join("\n");
+      document.getElementById("masterJabatansInput").value = db.jabatans.join("\n");
+    }
+
+    async function saveMasterDataToSheet() {
+      const stores = document.getElementById("masterStoresInput").value.split("\n").map(s => s.trim()).filter(Boolean);
+      const jabatans = document.getElementById("masterJabatansInput").value.split("\n").map(j => j.trim()).filter(Boolean);
+
+      if (stores.length) db.stores = stores;
+      if (jabatans.length) db.jabatans = jabatans;
+
+      await saveToSpreadsheet({
+        action: "saveMaster",
+        stores: db.stores,
+        jabatans: db.jabatans
+      });
+
+      populateEmployeeForm();
+      alert("Daftar Store & Jabatan berhasil diperbarui ke Spreadsheet!");
+    }
+
+    function openConfigModal() {
+      document.getElementById("inputScriptUrl").value = getScriptUrl();
+      const modal = document.getElementById("modalScriptConfig");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeConfigModal() {
+      const modal = document.getElementById("modalScriptConfig");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    async function saveScriptUrlConfig() {
+      const val = document.getElementById("inputScriptUrl").value.trim();
+      if (val) {
+        localStorage.setItem("SAMCHICK_SCRIPT_URL", val);
+      } else {
+        localStorage.removeItem("SAMCHICK_SCRIPT_URL");
+      }
+      closeConfigModal();
+      await syncWithSpreadsheet();
+    }
+
+    // =========================================================================
+    // 9. INISIALISASI SAAT HALAMAN DIBUKA
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("exam")) {
+        // Jika karyawan membuka dari link ujian khusus, sembunyikan tombol Back Office agar fokus ujian
+        document.getElementById("btnModeAdmin").classList.add("hidden");
+      }
+      await loadDatabase();
+      switchMode("employee");
+    });
+  </script>
+</body>
+</html>
