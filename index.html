@@ -290,10 +290,58 @@
 
       <!-- TAB 2: REVIEW JAWABAN & RILIS SKOR -->
       <div id="adminTabReview" class="hidden space-y-4">
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-          <h3 class="font-extrabold text-base text-slate-900">Review Manual & Rilis Skor ke Karyawan</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Periksa jawaban essay/uraian karyawan, sesuaikan poin nilai, lalu klik tombol <b>Rilis Skor Sekarang</b> agar nilai tampil di layar karyawan dan tercatat di Spreadsheet.</p>
-          <div id="reviewSubmissionsContainer" class="mt-4 space-y-4"></div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="font-extrabold text-base text-slate-900">Review Manual & Rilis Skor ke Karyawan</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Periksa jawaban essay/uraian karyawan, sesuaikan poin nilai, lalu klik tombol <b>Rilis Skor Sekarang</b> agar nilai tampil di layar karyawan dan tercatat di Spreadsheet.</p>
+            </div>
+            <span id="reviewFilterCountBadge" class="text-xs font-extrabold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
+              Menampilkan 0 Data
+            </span>
+          </div>
+
+          <!-- BARIS FILTER REVIEW -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+            <!-- 1. Filter Status Rilis / Review -->
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Status Review</label>
+              <select id="reviewFilterStatus" onchange="renderReviewSection()" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold bg-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                <option value="ALL">Semua Status (Review & Dirilis)</option>
+                <option value="Menunggu Review">⏳ Menunggu Review Saja</option>
+                <option value="Dirilis">✅ Sudah Dirilis Saja</option>
+              </select>
+            </div>
+
+            <!-- 2. Filter Kode Soal / Paket Ujian -->
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Kode / Paket Soal</label>
+              <select id="reviewFilterPaket" onchange="renderReviewSection()" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold bg-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                <option value="ALL">Semua Kode Soal</option>
+              </select>
+            </div>
+
+            <!-- 3. Filter Dropdown Nama Karyawan -->
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Pilih Nama Karyawan</label>
+              <select id="reviewFilterNama" onchange="renderReviewSection()" class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs font-bold bg-white focus:ring-2 focus:ring-red-500 focus:outline-none">
+                <option value="ALL">Semua Karyawan</option>
+              </select>
+            </div>
+
+            <!-- 4. Cari Cepat (Ketik Nama / Store / Kode Soal) -->
+            <div>
+              <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Cari Cepat Nama / Store</label>
+              <div class="flex items-center gap-1.5">
+                <input type="text" id="reviewFilterSearch" oninput="renderReviewSection()" placeholder="Ketik nama / store..." class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs bg-white focus:ring-2 focus:ring-red-500 focus:outline-none" />
+                <button onclick="resetReviewFilters()" title="Reset Filter" class="px-2.5 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-xs font-bold text-slate-600">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="reviewSubmissionsContainer" class="space-y-4"></div>
         </div>
       </div>
 
@@ -1064,18 +1112,82 @@ function populateEmployeeForm() {
       renderMasterDataSection();
     }
 
-    // =========================================================================
-    // 6. FITUR REVIEW JAWABAN MANUAL & TOMBOL RILIS SKOR
+// =========================================================================
+    // 6. FITUR REVIEW JAWABAN MANUAL, FILTER & TOMBOL RILIS SKOR
     // =========================================================================
     function renderReviewSection() {
       const container = document.getElementById("reviewSubmissionsContainer");
-      if (!db.hasilUjian.length) {
-        container.innerHTML = `<p class="text-xs text-slate-400">Belum ada jawaban masuk.</p>`;
+      const statusSelect = document.getElementById("reviewFilterStatus");
+      const paketSelect = document.getElementById("reviewFilterPaket");
+      const namaSelect = document.getElementById("reviewFilterNama");
+      const searchInput = document.getElementById("reviewFilterSearch");
+      const countBadge = document.getElementById("reviewFilterCountBadge");
+
+      if (!container) return;
+
+      // Simpan pilihan filter saat ini agar tidak ter-reset saat render ulang
+      const currStatus = statusSelect ? statusSelect.value : "ALL";
+      const currPaket = paketSelect ? paketSelect.value : "ALL";
+      const currNama = namaSelect ? namaSelect.value : "ALL";
+      const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
+      // 1. Isi pilihan dropdown Kode Soal (gabungan dari PaketSoal & HasilUjian)
+      if (paketSelect) {
+        const paketMap = new Map();
+        db.paketSoal.forEach(p => paketMap.set(String(p.id), p.title));
+        db.hasilUjian.forEach(h => {
+          if (h.paketId && !paketMap.has(String(h.paketId))) {
+            paketMap.set(String(h.paketId), h.paketTitle || "");
+          }
+        });
+
+        paketSelect.innerHTML = `<option value="ALL">Semua Kode Soal</option>` +
+          Array.from(paketMap.entries()).map(([id, title]) =>
+            `<option value="${id}">[${id}] ${title}</option>`
+          ).join("");
+        paketSelect.value = paketMap.has(currPaket) ? currPaket : "ALL";
+      }
+
+      // 2. Isi pilihan dropdown Nama Karyawan yang sudah mengerjakan
+      if (namaSelect) {
+        const uniqueNames = [...new Set(db.hasilUjian.map(h => h.nama).filter(Boolean))].sort();
+        namaSelect.innerHTML = `<option value="ALL">Semua Karyawan (${uniqueNames.length})</option>` +
+          uniqueNames.map(n => `<option value="${n}">${n}</option>`).join("");
+        namaSelect.value = uniqueNames.includes(currNama) ? currNama : "ALL";
+      }
+
+      // 3. Terapkan Filter (Status, Kode Soal, Nama Karyawan, & Pencarian Ketik)
+      const activePaketFilter = paketSelect ? paketSelect.value : "ALL";
+      const activeNamaFilter = namaSelect ? namaSelect.value : "ALL";
+
+      const filteredSubmissions = db.hasilUjian.filter(sub => {
+        const matchStatus = currStatus === "ALL" || sub.status === currStatus;
+        const matchPaket = activePaketFilter === "ALL" || String(sub.paketId) === String(activePaketFilter);
+        const matchNama = activeNamaFilter === "ALL" || String(sub.nama) === String(activeNamaFilter);
+        const matchSearch = !searchQuery ||
+          String(sub.nama || "").toLowerCase().includes(searchQuery) ||
+          String(sub.store || "").toLowerCase().includes(searchQuery) ||
+          String(sub.jabatan || "").toLowerCase().includes(searchQuery) ||
+          String(sub.paketId || "").toLowerCase().includes(searchQuery);
+
+        return matchStatus && matchPaket && matchNama && matchSearch;
+      });
+
+      if (countBadge) {
+        countBadge.textContent = `Menampilkan ${filteredSubmissions.length} dari ${db.hasilUjian.length} Jawaban`;
+      }
+
+      if (!filteredSubmissions.length) {
+        container.innerHTML = `
+          <div class="p-8 text-center rounded-2xl border border-dashed border-slate-200 text-xs text-slate-400">
+            Tidak ada data jawaban karyawan yang sesuai dengan filter di atas.
+          </div>`;
         return;
       }
 
-      container.innerHTML = db.hasilUjian.map(sub => {
-        const paket = db.paketSoal.find(p => p.id === sub.paketId);
+      // 4. Render Kartu Review Jawaban
+      container.innerHTML = filteredSubmissions.map(sub => {
+        const paket = db.paketSoal.find(p => String(p.id) === String(sub.paketId));
         const questions = paket ? paket.questions : [];
 
         const detailAnswers = questions.map((q, idx) => {
@@ -1096,7 +1208,10 @@ function populateEmployeeForm() {
               <div>
                 <span class="font-extrabold text-sm text-slate-900">${sub.nama}</span>
                 <span class="text-xs text-slate-500"> • ${sub.store} (${sub.jabatan})</span>
-                <div class="text-[11px] text-slate-400">${sub.paketTitle}</div>
+                <div class="flex items-center gap-1.5 mt-1">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-200 text-slate-800 font-mono text-[10px] font-bold">${sub.paketId}</span>
+                  <span class="text-[11px] text-slate-500 font-medium">${sub.paketTitle}</span>
+                </div>
               </div>
               <span class="px-2.5 py-1 rounded-full text-xs font-bold ${sub.status === 'Dirilis' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
                 ${sub.status}
@@ -1117,6 +1232,14 @@ function populateEmployeeForm() {
           </div>
         `;
       }).join("");
+    }
+
+    function resetReviewFilters() {
+      document.getElementById("reviewFilterStatus").value = "ALL";
+      document.getElementById("reviewFilterPaket").value = "ALL";
+      document.getElementById("reviewFilterNama").value = "ALL";
+      document.getElementById("reviewFilterSearch").value = "";
+      renderReviewSection();
     }
 
     async function releaseEmployeeScore(submissionId) {
