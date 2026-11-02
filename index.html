@@ -67,18 +67,18 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Nama Lengkap Karyawan</label>
-            <input type="text" id="empNama" required placeholder="Contoh: Budi Santoso" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none" />
+            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">1. Pilih Asal Store</label>
+            <select id="empStore" required onchange="onStoreChange()" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-white"></select>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Asal Store</label>
-              <select id="empStore" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-white"></select>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">2. Pilih Nama Karyawan</label>
+              <select id="empNama" required onchange="onNamaChange()" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-white"></select>
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Jabatan</label>
-              <select id="empJabatan" required class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none bg-white"></select>
+              <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">3. Jabatan (Otomatis)</label>
+              <input type="text" id="empJabatan" readonly required placeholder="Terisi otomatis..." class="w-full rounded-xl border border-slate-200 bg-slate-100 text-slate-700 font-bold px-3.5 py-2.5 text-sm focus:outline-none cursor-not-allowed" />
             </div>
           </div>
 
@@ -373,26 +373,20 @@
       </div>
 
       <!-- TAB 4: PENGATURAN MASTER DATA (STORE & JABATAN) -->
+      <!-- TAB 4: PENGATURAN MASTER DATA KARYAWAN -->
       <div id="adminTabMaster" class="hidden bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h3 class="font-extrabold text-base text-slate-900">Database Dropdown Store & Jabatan</h3>
-            <p class="text-xs text-slate-500">Daftar ini otomatis muncul sebagai pilihan dropdown pada halaman biodata karyawan.</p>
+            <h3 class="font-extrabold text-base text-slate-900">Database Karyawan (Nama, Store & Jabatan)</h3>
+            <p class="text-xs text-slate-500">Format penulisan per baris: <b>Nama Karyawan | Asal Store | Jabatan</b> (pisahkan dengan tanda garis tegak <code>|</code>).</p>
           </div>
           <button onclick="saveMasterDataToSheet()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">
             💾 Simpan Master Data ke Spreadsheet
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Daftar Cabang / Store SAMCHICK (1 baris 1 store)</label>
-            <textarea id="masterStoresInput" rows="8" class="w-full rounded-xl border border-slate-300 p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
-          </div>
-          <div>
-            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Daftar Jabatan Karyawan (1 baris 1 jabatan)</label>
-            <textarea id="masterJabatansInput" rows="8" class="w-full rounded-xl border border-slate-300 p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
-          </div>
+        <div>
+          <textarea id="masterKaryawanInput" rows="10" placeholder="Budi Santoso | SAMCHICK Pusat - Kediri | Crew Outlet" class="w-full rounded-xl border border-slate-300 p-3 text-sm font-mono focus:ring-2 focus:ring-red-500 focus:outline-none"></textarea>
         </div>
       </div>
     </section>
@@ -457,8 +451,15 @@
     // =========================================================================
     // 2. STATE DATABASE LOKAL & SINKRONISASI SPREADSHEET (BEBAS BLOKIR CORS)
     // =========================================================================
-    let db = {
-      stores: ["SAMCHICK Pusat - Kediri", "SAMCHICK Cabang Pare", "SAMCHICK Cabang Mojoroto", "SAMCHICK Cabang Nganjuk", "SAMCHICK Cabang Blitar"],
+     let db = {
+      karyawan: [
+        { nama: "Rina Wijaya", store: "SAMCHICK Pusat - Kediri", jabatan: "Kasir" },
+        { nama: "Budi Santoso", store: "SAMCHICK Pusat - Kediri", jabatan: "Crew Outlet" },
+        { nama: "Doni Pratama", store: "SAMCHICK Cabang Pare", jabatan: "Cook / Kitchen" },
+        { nama: "Bagus Setiawan", store: "SAMCHICK Cabang Mojoroto", jabatan: "Crew Outlet" },
+        { nama: "Siti Aminah", store: "SAMCHICK Cabang Nganjuk", jabatan: "Supervisor Store" }
+      ],
+      stores: ["SAMCHICK Pusat - Kediri", "SAMCHICK Cabang Pare", "SAMCHICK Cabang Mojoroto", "SAMCHICK Cabang Nganjuk"],
       jabatans: ["Crew Outlet", "Kasir", "Cook / Kitchen", "Supervisor Store", "Store Manager"],
       paketSoal: [
         {
@@ -552,10 +553,15 @@
         const data = await res.json();
 
         if (data.master && data.master.length > 0) {
-          const stores = data.master.map(r => r.Store).filter(Boolean);
-          const jabatans = data.master.map(r => r.Jabatan).filter(Boolean);
-          if (stores.length) db.stores = stores;
-          if (jabatans.length) db.jabatans = jabatans;
+          db.karyawan = data.master
+            .filter(r => r.Nama && r.Store)
+            .map(r => ({
+              nama: String(r.Nama).trim(),
+              store: String(r.Store).trim(),
+              jabatan: String(r.Jabatan || "").trim()
+            }));
+          db.stores = [...new Set(db.karyawan.map(k => k.store))];
+          db.jabatans = [...new Set(db.karyawan.map(k => k.jabatan).filter(Boolean))];
         }
 
         if (data.paketSoal && data.paketSoal.length > 0) {
@@ -653,7 +659,7 @@
     // =========================================================================
     // 4. ALUR PENGERJAAN UJIAN KARYAWAN
     // =========================================================================
-    function populateEmployeeForm() {
+function populateEmployeeForm() {
       const urlParams = new URLSearchParams(window.location.search);
       const lockedExamId = urlParams.get("exam");
 
@@ -664,16 +670,40 @@
         paketSelect.value = lockedExamId;
       }
 
+      // Ambil daftar store unik dari data karyawan
+      const uniqueStores = [...new Set(db.karyawan.map(k => k.store))];
       const storeSelect = document.getElementById("empStore");
       storeSelect.innerHTML = `<option value="">-- Pilih Asal Store --</option>` +
-        db.stores.map(s => `<option value="${s}">${s}</option>`).join("");
+        uniqueStores.map(s => `<option value="${s}">${s}</option>`).join("");
 
-      const jabatanSelect = document.getElementById("empJabatan");
-      jabatanSelect.innerHTML = `<option value="">-- Pilih Jabatan --</option>` +
-        db.jabatans.map(j => `<option value="${j}">${j}</option>`).join("");
-
+      onStoreChange();
       updateExamInfoPreview();
       paketSelect.onchange = updateExamInfoPreview;
+    }
+
+    function onStoreChange() {
+      const selectedStore = document.getElementById("empStore").value;
+      const namaSelect = document.getElementById("empNama");
+      const jabatanInput = document.getElementById("empJabatan");
+
+      jabatanInput.value = "";
+      if (!selectedStore) {
+        namaSelect.innerHTML = `<option value="">-- Pilih Store Terlebih Dahulu --</option>`;
+        return;
+      }
+
+      const filteredKaryawan = db.karyawan.filter(k => k.store === selectedStore);
+      namaSelect.innerHTML = `<option value="">-- Pilih Nama Karyawan --</option>` +
+        filteredKaryawan.map(k => `<option value="${k.nama}">${k.nama}</option>`).join("");
+    }
+
+    function onNamaChange() {
+      const selectedStore = document.getElementById("empStore").value;
+      const selectedNama = document.getElementById("empNama").value;
+      const jabatanInput = document.getElementById("empJabatan");
+
+      const found = db.karyawan.find(k => k.store === selectedStore && k.nama === selectedNama);
+      jabatanInput.value = found ? found.jabatan : "";
     }
 
     function updateExamInfoPreview() {
@@ -895,11 +925,12 @@
       }
     }
 
-    function resetEmployeePortal() {
+     function resetEmployeePortal() {
       document.getElementById("empStepResult").classList.add("hidden");
       document.getElementById("empStepQuiz").classList.add("hidden");
       document.getElementById("empStepBiodata").classList.remove("hidden");
-      document.getElementById("empNama").value = "";
+      document.getElementById("empStore").value = "";
+      onStoreChange();
     }
 
     // =========================================================================
@@ -1299,26 +1330,35 @@
     // =========================================================================
     // 8. PENGATURAN MASTER DATA STORE & JABATAN + KONEKSI URL SHEET
     // =========================================================================
-    function renderMasterDataSection() {
-      document.getElementById("masterStoresInput").value = db.stores.join("\n");
-      document.getElementById("masterJabatansInput").value = db.jabatans.join("\n");
+     function renderMasterDataSection() {
+      const lines = db.karyawan.map(k => `${k.nama} | ${k.store} | ${k.jabatan}`);
+      document.getElementById("masterKaryawanInput").value = lines.join("\n");
     }
 
     async function saveMasterDataToSheet() {
-      const stores = document.getElementById("masterStoresInput").value.split("\n").map(s => s.trim()).filter(Boolean);
-      const jabatans = document.getElementById("masterJabatansInput").value.split("\n").map(j => j.trim()).filter(Boolean);
+      const rawLines = document.getElementById("masterKaryawanInput").value.split("\n").map(l => l.trim()).filter(Boolean);
+      const parsed = rawLines.map(line => {
+        const parts = line.split("|").map(p => p.trim());
+        return {
+          nama: parts[0] || "",
+          store: parts[1] || "",
+          jabatan: parts[2] || ""
+        };
+      }).filter(k => k.nama && k.store);
 
-      if (stores.length) db.stores = stores;
-      if (jabatans.length) db.jabatans = jabatans;
+      if (parsed.length) {
+        db.karyawan = parsed;
+        db.stores = [...new Set(parsed.map(k => k.store))];
+        db.jabatans = [...new Set(parsed.map(k => k.jabatan).filter(Boolean))];
+      }
 
       await saveToSpreadsheet({
         action: "saveMaster",
-        stores: db.stores,
-        jabatans: db.jabatans
+        karyawan: db.karyawan
       });
 
       populateEmployeeForm();
-      alert("Daftar Store & Jabatan berhasil diperbarui ke Spreadsheet!");
+      alert("Data Karyawan (Nama, Store & Jabatan) berhasil diperbarui ke Spreadsheet!");
     }
 
     function openConfigModal() {
