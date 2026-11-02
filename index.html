@@ -207,18 +207,40 @@
       </div>
 
       <!-- TAB 1: RANKING & NILAI TERENDAH -->
+      <!-- TAB 1: RANKING & NILAI TERENDAH -->
       <div id="adminTabRanking" class="space-y-6">
-        <!-- KPI Cards -->
+        
+        <!-- BARIS FILTER UTAMA DASHBOARD (PER STORE & JABATAN) -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-extrabold text-sm sm:text-base text-slate-900">Filter Analitik & Performa Cabang</h3>
+            <p class="text-xs text-slate-500">Pilih cabang store untuk melihat rata-rata skor, peserta, dan ranking khusus store tersebut.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="filterStore" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-extrabold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none">
+              <option value="ALL">🏪 Semua Store (Seluruh Cabang)</option>
+            </select>
+            <select id="filterJabatan" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-red-500 focus:outline-none">
+              <option value="ALL">👤 Semua Jabatan</option>
+            </select>
+            <select id="sortOrder" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-red-500 focus:outline-none">
+              <option value="DESC">⬇️ Urutkan: Nilai Tertinggi</option>
+              <option value="ASC">⬆️ Urutkan: Nilai Terendah</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- KPI Cards (Otomatis Mengikuti Filter Store) -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="text-xs font-bold text-slate-400 uppercase">Total Peserta</div>
             <div id="kpiTotalPeserta" class="text-2xl font-extrabold text-slate-900 mt-1">0</div>
-            <div class="text-[11px] text-slate-500 mt-1">Seluruh cabang SAMCHICK</div>
+            <div id="kpiScopeLabel" class="text-[11px] text-slate-500 mt-1">Seluruh cabang SAMCHICK</div>
           </div>
           <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="text-xs font-bold text-slate-400 uppercase">Rata-Rata Skor</div>
             <div id="kpiAvgScore" class="text-2xl font-extrabold text-emerald-600 mt-1">0</div>
-            <div class="text-[11px] text-slate-500 mt-1">Dari skor yang telah dirilis</div>
+            <div id="kpiAvgSubLabel" class="text-[11px] text-slate-500 mt-1">Dari skor yang telah dirilis</div>
           </div>
           <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
             <div class="text-xs font-bold text-slate-400 uppercase">Nilai Terendah</div>
@@ -232,20 +254,31 @@
           </div>
         </div>
 
-        <!-- Highlight Top Ranking & Nilai Terendah -->
+        <!-- Rekap Perbandingan Rata-Rata Skor Per Store -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-extrabold text-sm text-slate-900">🏪 Ringkasan Rata-Rata Skor Per Store</h3>
+              <p class="text-[11px] text-slate-500">Klik pada kartu store di bawah untuk memfilter dashboard ke cabang tersebut.</p>
+            </div>
+          </div>
+          <div id="storeAvgSummaryList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"></div>
+        </div>
+
+        <!-- Highlight Top Ranking & Nilai Di Bawah KKM -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-extrabold text-sm text-slate-900">🏆 Peringkat Tertinggi (Top Performers)</h3>
-              <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">Skor Tertinggi</span>
+              <h3 class="font-extrabold text-sm text-slate-900">🏆 Peringkat Tertinggi (Lulus KKM)</h3>
+              <span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full">Skor &ge; KKM</span>
             </div>
             <div id="topPerformersList" class="space-y-2.5"></div>
           </div>
 
           <div class="bg-white rounded-2xl border border-red-200 p-5 shadow-sm">
             <div class="flex items-center justify-between mb-3">
-              <h3 class="font-extrabold text-sm text-red-700">⚠️ Perhatian Khusus: Nilai Terendah / Di Bawah KKM</h3>
-              <span class="text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full">Wajib Coaching</span>
+              <h3 class="font-extrabold text-sm text-red-700">⚠️ Perhatian Khusus: Di Bawah KKM</h3>
+              <span class="text-[11px] font-bold text-red-700 bg-red-50 px-2.5 py-0.5 rounded-full">Skor &lt; KKM (Wajib Coaching)</span>
             </div>
             <div id="lowestPerformersList" class="space-y-2.5"></div>
           </div>
@@ -255,18 +288,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <h3 class="font-extrabold text-base text-slate-900">Daftar Lengkap Ranking & Nilai Karyawan</h3>
-            <div class="flex flex-wrap items-center gap-2">
-              <select id="filterStore" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold">
-                <option value="ALL">Semua Store</option>
-              </select>
-              <select id="filterJabatan" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold">
-                <option value="ALL">Semua Jabatan</option>
-              </select>
-              <select id="sortOrder" onchange="renderAdminDashboard()" class="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-semibold">
-                <option value="DESC">Urutkan: Nilai Tertinggi (Ranking 1)</option>
-                <option value="ASC">Urutkan: Nilai Terendah</option>
-              </select>
-            </div>
+            <span id="tableScopeBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-700">Semua Store</span>
           </div>
 
           <div class="overflow-x-auto">
@@ -1025,87 +1047,168 @@ function populateEmployeeForm() {
       renderAdminDashboard();
     }
 
+// Helper untuk mengambil nilai KKM dari paket soal terkait (Default: 75)
+    function getKkmForSubmission(sub) {
+      const paket = db.paketSoal.find(p => String(p.id) === String(sub.paketId));
+      return paket ? Number(paket.kkm || 75) : 75;
+    }
+
+    function selectStoreFilter(storeName) {
+      const fStore = document.getElementById("filterStore");
+      if (!fStore) return;
+      fStore.value = fStore.value === storeName ? "ALL" : storeName;
+      renderAdminDashboard();
+    }
+
     function renderAdminDashboard() {
-      // Populate Filter Dropdowns
+      // 1. Gabungkan daftar store & jabatan dari MasterData + HasilUjian agar tidak ada yang terlewat
+      const allStores = [...new Set([...db.stores, ...db.hasilUjian.map(h => h.store).filter(Boolean)])];
+      const allJabatans = [...new Set([...db.jabatans, ...db.hasilUjian.map(h => h.jabatan).filter(Boolean)])];
+
       const fStore = document.getElementById("filterStore");
       const currStore = fStore.value || "ALL";
-      fStore.innerHTML = `<option value="ALL">Semua Store</option>` + db.stores.map(s => `<option value="${s}">${s}</option>`).join("");
-      fStore.value = currStore;
+      fStore.innerHTML = `<option value="ALL">🏪 Semua Store (Seluruh Cabang)</option>` +
+        allStores.map(s => `<option value="${s}">🏪 Store: ${s}</option>`).join("");
+      fStore.value = allStores.includes(currStore) ? currStore : "ALL";
 
       const fJab = document.getElementById("filterJabatan");
       const currJab = fJab.value || "ALL";
-      fJab.innerHTML = `<option value="ALL">Semua Jabatan</option>` + db.jabatans.map(j => `<option value="${j}">${j}</option>`).join("");
-      fJab.value = currJab;
+      fJab.innerHTML = `<option value="ALL">👤 Semua Jabatan</option>` +
+        allJabatans.map(j => `<option value="${j}">👤 ${j}</option>`).join("");
+      fJab.value = allJabatans.includes(currJab) ? currJab : "ALL";
 
-      const releasedList = db.hasilUjian.filter(h => h.status === "Dirilis");
-      const pendingList = db.hasilUjian.filter(h => h.status !== "Dirilis");
+      const activeStore = fStore.value;
+      const activeJab = fJab.value;
 
-      document.getElementById("badgePendingCount").textContent = pendingList.length;
-      document.getElementById("kpiTotalPeserta").textContent = db.hasilUjian.length;
+      // Badge total antrean review global di tombol navigasi atas
+      const totalPendingGlobal = db.hasilUjian.filter(h => h.status !== "Dirilis").length;
+      document.getElementById("badgePendingCount").textContent = totalPendingGlobal;
+
+      // 2. Filter data berdasarkan Store & Jabatan yang dipilih
+      let scopedList = [...db.hasilUjian];
+      if (activeStore !== "ALL") scopedList = scopedList.filter(h => h.store === activeStore);
+      if (activeJab !== "ALL") scopedList = scopedList.filter(h => h.jabatan === activeJab);
+
+      const releasedList = scopedList.filter(h => h.status === "Dirilis");
+      const pendingList = scopedList.filter(h => h.status !== "Dirilis");
+
+      // 3. Update 4 Kartu KPI sesuai Filter Store
+      const scopeText = activeStore === "ALL" ? "Seluruh cabang SAMCHICK" : `Cabang: ${activeStore}`;
+      document.getElementById("kpiTotalPeserta").textContent = scopedList.length;
+      document.getElementById("kpiScopeLabel").textContent = scopeText;
       document.getElementById("kpiPendingReview").textContent = pendingList.length;
+      document.getElementById("tableScopeBadge").textContent = activeStore === "ALL" ? "Semua Store" : `Store: ${activeStore}`;
 
       if (releasedList.length > 0) {
         const avg = Math.round(releasedList.reduce((acc, r) => acc + Number(r.score), 0) / releasedList.length);
         document.getElementById("kpiAvgScore").textContent = avg;
+        document.getElementById("kpiAvgSubLabel").textContent = `Rata-rata ${releasedList.length} peserta (${activeStore === "ALL" ? "Semua Store" : activeStore})`;
 
-        const sortedAsc = [...releasedList].sort((a, b) => a.score - b.score);
+        const sortedAsc = [...releasedList].sort((a, b) => Number(a.score) - Number(b.score));
         document.getElementById("kpiLowestScore").textContent = sortedAsc[0].score;
         document.getElementById("kpiLowestName").textContent = `${sortedAsc[0].nama} (${sortedAsc[0].store})`;
       } else {
         document.getElementById("kpiAvgScore").textContent = "0";
+        document.getElementById("kpiAvgSubLabel").textContent = "Belum ada skor dirilis";
         document.getElementById("kpiLowestScore").textContent = "-";
         document.getElementById("kpiLowestName").textContent = "Belum ada skor rilis";
       }
 
-      // Render Top Performers & Nilai Terendah
-      const topSorted = [...releasedList].sort((a, b) => b.score - a.score).slice(0, 3);
-      document.getElementById("topPerformersList").innerHTML = topSorted.length ? topSorted.map((item, idx) => `
-        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-          <div class="flex items-center gap-3">
-            <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center">${idx + 1}</span>
+      // 4. Render Ringkasan Rata-Rata Skor Per Store
+      const storeSummaryEl = document.getElementById("storeAvgSummaryList");
+      if (storeSummaryEl) {
+        storeSummaryEl.innerHTML = allStores.map(st => {
+          const stAll = db.hasilUjian.filter(h => h.store === st);
+          const stReleased = stAll.filter(h => h.status === "Dirilis");
+          const stAvg = stReleased.length
+            ? Math.round(stReleased.reduce((sum, item) => sum + Number(item.score), 0) / stReleased.length)
+            : null;
+          const isSelected = activeStore === st;
+
+          return `
+            <div onclick="selectStoreFilter('${st}')" class="p-3.5 rounded-xl border cursor-pointer transition ${isSelected ? 'border-red-600 bg-red-50/50 ring-2 ring-red-200' : 'border-slate-200 bg-slate-50/70 hover:bg-slate-100'}">
+              <div class="flex items-center justify-between">
+                <span class="font-extrabold text-xs text-slate-900 truncate">${st}</span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isSelected ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'}">
+                  ${stAll.length} Peserta
+                </span>
+              </div>
+              <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-[11px] text-slate-500">Rata-Rata Skor:</span>
+                <span class="text-base font-extrabold ${stAvg === null ? 'text-slate-400' : (stAvg >= 75 ? 'text-emerald-600' : 'text-red-600')}">
+                  ${stAvg !== null ? stAvg + ' Poin' : 'Belum Ada'}
+                </span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // 5. Render Top Performers (HANYA yang Lulus KKM: score >= KKM)
+      const passedList = releasedList
+        .filter(item => Number(item.score) >= getKkmForSubmission(item))
+        .sort((a, b) => Number(b.score) - Number(a.score))
+        .slice(0, 5);
+
+      document.getElementById("topPerformersList").innerHTML = passedList.length ? passedList.map((item, idx) => {
+        const kkm = getKkmForSubmission(item);
+        return `
+          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div class="flex items-center gap-3">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-extrabold text-xs flex items-center justify-center">${idx + 1}</span>
+              <div>
+                <div class="font-bold text-xs sm:text-sm text-slate-900">${item.nama}</div>
+                <div class="text-[11px] text-slate-500">${item.store} • ${item.jabatan} (KKM: ${kkm})</div>
+              </div>
+            </div>
+            <span class="font-extrabold text-sm text-emerald-700">${item.score} Poin</span>
+          </div>
+        `;
+      }).join("") : `<p class="text-xs text-slate-400">Belum ada peserta yang mencapai batas lulus KKM pada filter ini.</p>`;
+
+      // 6. Render Perhatian Khusus: Di Bawah KKM (HANYA yang score < KKM)
+      const belowKkmList = releasedList
+        .filter(item => Number(item.score) < getKkmForSubmission(item))
+        .sort((a, b) => Number(a.score) - Number(b.score));
+
+      document.getElementById("lowestPerformersList").innerHTML = belowKkmList.length ? belowKkmList.map(item => {
+        const kkm = getKkmForSubmission(item);
+        return `
+          <div class="flex items-center justify-between p-3 rounded-xl bg-red-50/60 border border-red-200">
             <div>
               <div class="font-bold text-xs sm:text-sm text-slate-900">${item.nama}</div>
-              <div class="text-[11px] text-slate-500">${item.store} • ${item.jabatan}</div>
+              <div class="text-[11px] text-slate-500">${item.store} • ${item.jabatan} (Batas KKM: ${kkm})</div>
             </div>
+            <span class="font-extrabold text-sm text-red-600">${item.score} Poin</span>
           </div>
-          <span class="font-extrabold text-sm text-emerald-700">${item.score} Poin</span>
-        </div>
-      `).join("") : `<p class="text-xs text-slate-400">Belum ada data nilai dirilis.</p>`;
+        `;
+      }).join("") : `<p class="text-xs text-emerald-600 font-semibold">🎉 Semua peserta yang dirilis pada filter ini telah LULUS KKM!</p>`;
 
-      const lowSorted = [...releasedList].sort((a, b) => a.score - b.score).slice(0, 3);
-      document.getElementById("lowestPerformersList").innerHTML = lowSorted.length ? lowSorted.map(item => `
-        <div class="flex items-center justify-between p-3 rounded-xl bg-red-50/60 border border-red-200">
-          <div>
-            <div class="font-bold text-xs sm:text-sm text-slate-900">${item.nama}</div>
-            <div class="text-[11px] text-slate-500">${item.store} • ${item.jabatan}</div>
-          </div>
-          <span class="font-extrabold text-sm text-red-600">${item.score} Poin</span>
-        </div>
-      `).join("") : `<p class="text-xs text-slate-400">Belum ada data nilai terendah.</p>`;
-
-      // Render Main Ranking Table
-      let filtered = [...db.hasilUjian];
-      if (currStore !== "ALL") filtered = filtered.filter(h => h.store === currStore);
-      if (currJab !== "ALL") filtered = filtered.filter(h => h.jabatan === currJab);
-
+      // 7. Render Tabel Lengkap Ranking
       const sortOrder = document.getElementById("sortOrder").value;
-      filtered.sort((a, b) => sortOrder === "DESC" ? b.score - a.score : a.score - b.score);
+      scopedList.sort((a, b) => sortOrder === "DESC" ? Number(b.score) - Number(a.score) : Number(a.score) - Number(b.score));
 
-      document.getElementById("rankingTableBody").innerHTML = filtered.map((item, index) => `
-        <tr class="hover:bg-slate-50">
-          <td class="py-3 px-3 font-extrabold text-slate-700">#${index + 1}</td>
-          <td class="py-3 px-3 font-bold text-slate-900">${item.nama}</td>
-          <td class="py-3 px-3 text-slate-600">${item.store}</td>
-          <td class="py-3 px-3 text-slate-600">${item.jabatan}</td>
-          <td class="py-3 px-3 text-slate-600">${item.paketTitle}</td>
-          <td class="py-3 px-3 font-extrabold ${item.score >= 75 ? 'text-emerald-600' : 'text-red-600'}">${item.score}</td>
-          <td class="py-3 px-3">
-            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${item.status === 'Dirilis' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
-              ${item.status}
-            </span>
-          </td>
-        </tr>
-      `).join("");
+      document.getElementById("rankingTableBody").innerHTML = scopedList.map((item, index) => {
+        const kkm = getKkmForSubmission(item);
+        const isPassed = Number(item.score) >= kkm;
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3 font-extrabold text-slate-700">#${index + 1}</td>
+            <td class="py-3 px-3 font-bold text-slate-900">${item.nama}</td>
+            <td class="py-3 px-3 text-slate-600">${item.store}</td>
+            <td class="py-3 px-3 text-slate-600">${item.jabatan}</td>
+            <td class="py-3 px-3 text-slate-600">${item.paketTitle}</td>
+            <td class="py-3 px-3 font-extrabold ${isPassed ? 'text-emerald-600' : 'text-red-600'}">
+              ${item.score} <span class="text-[10px] font-normal text-slate-400">/ KKM ${kkm}</span>
+            </td>
+            <td class="py-3 px-3">
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-bold ${item.status === 'Dirilis' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                ${item.status}
+              </span>
+            </td>
+          </tr>
+        `;
+      }).join("");
 
       renderReviewSection();
       renderPaketEditorSection();
