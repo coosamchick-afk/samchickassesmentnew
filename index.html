@@ -1300,9 +1300,11 @@ function populateEmployeeForm() {
     function openShareLinkModal() {
       const p = db.paketSoal[selectedPaketIndex];
       if (!p) return;
-      const baseUrl = window.location.origin + window.location.pathname;
-      const shareUrl = `${baseUrl}?exam=${encodeURIComponent(p.id)}`;
+      // Menghasilkan link murni khusus karyawan (tanpa akses admin)
+      const cleanBaseUrl = window.location.origin + window.location.pathname;
+      const shareUrl = `${cleanBaseUrl}?exam=${encodeURIComponent(p.id)}`;
       document.getElementById("shareableExamUrl").value = shareUrl;
+      
       const modal = document.getElementById("modalShareLink");
       modal.classList.remove("hidden");
       modal.classList.add("flex");
@@ -1385,17 +1387,36 @@ function populateEmployeeForm() {
       await syncWithSpreadsheet();
     }
 
-    // =========================================================================
-    // 9. INISIALISASI SAAT HALAMAN DIBUKA
+// =========================================================================
+    // 9. INISIALISASI & ISOLASI TAMPILAN KHUSUS KARYAWAN
     // =========================================================================
     window.addEventListener("DOMContentLoaded", async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("exam")) {
-        // Jika karyawan membuka dari link ujian khusus, sembunyikan tombol Back Office agar fokus ujian
-        document.getElementById("btnModeAdmin").classList.add("hidden");
-      }
+      const isSecretAdminUrl = urlParams.get("akses") === "admin";
+      const examIdParam = urlParams.get("exam");
+
       await loadDatabase();
-      switchMode("employee");
+
+      if (isSecretAdminUrl) {
+        // Jika membuka link khusus ?akses=admin, langsung tampilkan Login Back Office
+        switchMode("admin");
+      } else {
+        // TAMPILAN MURNI KARYAWAN: Sembunyikan seluruh tombol menu & akses Admin
+        document.getElementById("btnModeAdmin").classList.add("hidden");
+        document.getElementById("btnModeEmployee").classList.add("hidden");
+        document.getElementById("syncBadge").classList.add("hidden");
+
+        switchMode("employee");
+
+        // Jika masuk dari link bagikan soal (?exam=...), kunci pilihan paket soalnya
+        if (examIdParam) {
+          const paketSelect = document.getElementById("empPaketSelect");
+          paketSelect.value = examIdParam;
+          paketSelect.disabled = true;
+          paketSelect.classList.add("bg-slate-100", "cursor-not-allowed");
+          updateExamInfoPreview();
+        }
+      }
     });
   </script>
 </body>
